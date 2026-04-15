@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CERSA — Cyber Emergency Response & Solution Application</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020810;
+    --bg2: #040d1a;
+    --panel: #060f1e;
+    --border: #0e2a4a;
+    --accent: #00d4ff;
+    --accent2: #ff3c3c;
+    --accent3: #00ff88;
+    --text: #c8e0f0;
+    --text-dim: #4a7090;
+    --glow: 0 0 20px rgba(0,212,255,0.4);
+    --glow-red: 0 0 20px rgba(255,60,60,0.5);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px); pointer-events:none; z-index:9999; }
+  .grid-bg { position:fixed; inset:0; background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+
+  nav { position:fixed; top:0; left:0; right:0; z-index:1000; background:rgba(2,8,16,0.92); border-bottom:1px solid var(--border); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:space-between; padding:0 2rem; height:60px; }
+  .nav-logo { font-family:'Orbitron',sans-serif; font-weight:900; font-size:1.1rem; color:var(--accent); letter-spacing:0.15em; text-shadow:var(--glow); display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .nav-logo .dot { width:8px; height:8px; border-radius:50%; background:var(--accent2); animation:blink 1.2s infinite; }
+  .nav-links { display:flex; gap:0; }
+  .nav-links button { background:none; border:none; cursor:pointer; color:var(--text-dim); font-family:'Share Tech Mono',monospace; font-size:0.72rem; padding:0 14px; height:60px; letter-spacing:0.1em; text-transform:uppercase; transition:all 0.2s; position:relative; border-right:1px solid var(--border); }
+  .nav-links button:first-child { border-left:1px solid var(--border); }
+  .nav-links button:hover,.nav-links button.active { color:var(--accent); background:rgba(0,212,255,0.05); }
+  .nav-links button.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--accent); box-shadow:var(--glow); }
+  .alert-badge { background:var(--accent2); color:#fff; font-family:'Share Tech Mono',monospace; font-size:0.65rem; padding:3px 10px; border-radius:2px; animation:pulse-red 2s infinite; letter-spacing:0.1em; }
+
+  .page { display:none; min-height:100vh; padding-top:60px; position:relative; z-index:1; }
+  .page.active { display:block; }
+  .page-content { padding:3rem 4rem; max-width:1400px; margin:0 auto; }
+
+  .hero { min-height:calc(100vh - 60px); display:flex; flex-direction:column; justify-content:center; padding:4rem; position:relative; overflow:hidden; }
+  .hero-tag { font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--accent); letter-spacing:0.3em; text-transform:uppercase; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px; }
+  .hero-tag::before { content:''; width:30px; height:1px; background:var(--accent); }
+  .hero h1 { font-family:'Orbitron',sans-serif; font-weight:900; font-size:clamp(2.5rem,5vw,5.5rem); line-height:1; color:#fff; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1.5rem; }
+  .hero h1 span { color:var(--accent); text-shadow:var(--glow); }
+  .hero p { font-size:1.1rem; font-weight:300; color:var(--text-dim); max-width:560px; line-height:1.8; margin-bottom:3rem; }
+  .hero-buttons { display:flex; gap:1rem; flex-wrap:wrap; }
+  .btn-primary { background:var(--accent); color:#000; border:none; cursor:pointer; font-family:'Orbitron',sans-serif; font-weight:700; font-size:0.8rem; padding:14px 32px; letter-spacing:0.15em; text-transform:uppercase; clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px)); transition:all 0.3s; box-shadow:var(--glow); }
+  .btn-primary:hover { background:#fff; transform:translateY(-2px); }
+  .btn-secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); cursor:pointer; font-family:'Orbitron',sans-serif; font-weight:700; font-size:0.8rem; padding:14px 32px; letter-spacing:0.15em; text-transform:uppercase; clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px)); transition:all 0.3s; }
+  .btn-secondary:hover { background:rgba(0,212,255,0.1); transform:translateY(-2px); }
+
+  .hero-stats { position:absolute; right:4rem; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:1rem; }
+  .stat-box { background:rgba(6,15,30,0.8); border:1px solid var(--border); padding:1.2rem 1.5rem; min-width:180px; border-left:3px solid var(--accent); animation:slideInRight 0.5s ease both; }
+  .stat-box:nth-child(2) { border-left-color:var(--accent2); animation-delay:0.1s; }
+  .stat-box:nth-child(3) { border-left-color:var(--accent3); animation-delay:0.2s; }
+  .stat-label { font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--text-dim); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:6px; }
+  .stat-value { font-family:'Orbitron',monospace; font-size:1.8rem; font-weight:900; color:#fff; }
+  .stat-value.red { color:var(--accent2); text-shadow:var(--glow-red); }
+  .stat-value.green { color:var(--accent3); }
+
+  .ticker-bar { background:rgba(255,60,60,0.08); border-top:1px solid rgba(255,60,60,0.2); border-bottom:1px solid rgba(255,60,60,0.2); padding:10px 0; overflow:hidden; white-space:nowrap; margin-bottom:3rem; }
+  .ticker-inner { display:inline-block; animation:ticker 30s linear infinite; font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--accent2); letter-spacing:0.1em; }
+
+  .page-title { font-family:'Orbitron',sans-serif; font-weight:900; font-size:2.2rem; color:#fff; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.5rem; border-left:4px solid var(--accent); padding-left:1.2rem; }
+  .page-subtitle { font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; padding-left:1.4rem; margin-bottom:3rem; }
+
+  .panel { background:var(--panel); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .panel::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:0.5; }
+  .panel-header { padding:1rem 1.5rem; border-bottom:1px solid var(--border); font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+  .panel-body { padding:1.5rem; }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; }
+
+  .threat-card { background:var(--panel); border:1px solid var(--border); padding:1.5rem; transition:all 0.3s; cursor:pointer; position:relative; overflow:hidden; }
+  .threat-card::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(0,212,255,0.05),transparent); opacity:0; transition:opacity 0.3s; }
+  .threat-card:hover { border-color:var(--accent); transform:translateY(-4px); box-shadow:var(--glow); }
+  .threat-card:hover::after { opacity:1; }
+  .threat-icon { font-size:2rem; margin-bottom:1rem; }
+  .threat-name { font-family:'Orbitron',sans-serif; font-size:0.85rem; font-weight:700; color:#fff; text-transform:uppercase; margin-bottom:0.5rem; letter-spacing:0.1em; }
+  .threat-desc { font-size:0.85rem; color:var(--text-dim); line-height:1.7; }
+  .severity { display:inline-block; font-family:'Share Tech Mono',monospace; font-size:0.65rem; padding:2px 8px; border-radius:2px; margin-top:1rem; letter-spacing:0.15em; }
+  .sev-critical { background:rgba(255,60,60,0.2); color:var(--accent2); border:1px solid var(--accent2); }
+  .sev-high { background:rgba(255,140,0,0.15); color:#ff8c00; border:1px solid #ff8c00; }
+  .sev-medium { background:rgba(255,214,0,0.1); color:#ffd600; border:1px solid #ffd600; }
+  .sev-low { background:rgba(0,255,136,0.1); color:var(--accent3); border:1px solid var(--accent3); }
+
+  .timeline { position:relative; padding-left:2rem; }
+  .timeline::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:linear-gradient(to bottom,var(--accent),transparent); }
+  .timeline-item { position:relative; margin-bottom:2rem; padding-left:1.5rem; }
+  .timeline-item::before { content:''; position:absolute; left:-1.85rem; top:6px; width:12px; height:12px; border-radius:50%; border:2px solid var(--accent); background:var(--bg); box-shadow:var(--glow); }
+  .timeline-time { font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--accent); margin-bottom:4px; }
+  .timeline-title { font-family:'Orbitron',sans-serif; font-size:0.85rem; font-weight:700; color:#fff; margin-bottom:6px; }
+  .timeline-desc { font-size:0.85rem; color:var(--text-dim); line-height:1.7; }
+
+  .form-group { margin-bottom:1.5rem; }
+  .form-label { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; display:block; margin-bottom:8px; }
+  .form-input,.form-select,.form-textarea { width:100%; background:rgba(6,15,30,0.8); border:1px solid var(--border); color:var(--text); font-family:'Exo 2',sans-serif; font-size:0.9rem; padding:12px 16px; outline:none; transition:border-color 0.3s; -webkit-appearance:none; }
+  .form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,212,255,0.1); }
+  .form-textarea { resize:vertical; min-height:120px; }
+  .form-select option { background:var(--bg2); }
+
+  .progress-bar-wrap { margin-bottom:1.2rem; }
+  .progress-label { display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.8rem; font-family:'Share Tech Mono',monospace; }
+  .progress-label span:first-child { color:var(--text-dim); }
+  .progress-label span:last-child { color:var(--accent); }
+  .progress-track { background:rgba(14,42,74,0.5); height:6px; border-radius:0; }
+  .progress-fill { height:100%; background:var(--accent); box-shadow:var(--glow); border-radius:0; transition:width 1.5s ease; }
+  .progress-fill.red { background:var(--accent2); box-shadow:var(--glow-red); }
+  .progress-fill.green { background:var(--accent3); }
+
+  .data-table { width:100%; border-collapse:collapse; }
+  .data-table th { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; border-bottom:1px solid var(--border); padding:10px 14px; text-align:left; }
+  .data-table td { padding:12px 14px; font-size:0.85rem; border-bottom:1px solid rgba(14,42,74,0.4); color:var(--text-dim); }
+  .data-table tr:hover td { background:rgba(0,212,255,0.03); color:var(--text); }
+
+  .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .status-live { background:var(--accent3); box-shadow:0 0 6px var(--accent3); animation:blink 1.5s infinite; }
+  .status-warn { background:#ff8c00; box-shadow:0 0 6px #ff8c00; animation:blink 0.8s infinite; }
+  .status-crit { background:var(--accent2); box-shadow:0 0 6px var(--accent2); animation:blink 0.5s infinite; }
+  .status-off { background:#333; }
+
+  .badge { display:inline-block; font-family:'Share Tech Mono',monospace; font-size:0.65rem; padding:3px 10px; border-radius:2px; letter-spacing:0.1em; }
+  .badge-blue { background:rgba(0,212,255,0.15); color:var(--accent); border:1px solid rgba(0,212,255,0.3); }
+  .badge-red { background:rgba(255,60,60,0.15); color:var(--accent2); border:1px solid rgba(255,60,60,0.3); }
+  .badge-green { background:rgba(0,255,136,0.12); color:var(--accent3); border:1px solid rgba(0,255,136,0.3); }
+
+  .team-card { background:var(--panel); border:1px solid var(--border); padding:2rem; text-align:center; transition:all 0.3s; }
+  .team-card:hover { border-color:var(--accent); box-shadow:var(--glow); transform:translateY(-4px); }
+  .avatar { width:80px; height:80px; border-radius:50%; margin:0 auto 1rem; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:900; color:#fff; box-shadow:var(--glow); }
+  .team-name { font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; color:#fff; margin-bottom:4px; }
+  .team-role { font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--accent); letter-spacing:0.1em; margin-bottom:1rem; }
+  .team-bio { font-size:0.82rem; color:var(--text-dim); line-height:1.7; }
+
+  .resource-item { display:flex; align-items:flex-start; gap:1rem; padding:1.2rem; border-bottom:1px solid var(--border); transition:all 0.2s; }
+  .resource-item:hover { background:rgba(0,212,255,0.04); }
+  .resource-icon { font-size:1.5rem; flex-shrink:0; margin-top:2px; }
+  .resource-title { font-family:'Orbitron',sans-serif; font-size:0.8rem; font-weight:700; color:#fff; margin-bottom:4px; }
+  .resource-meta { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--text-dim); }
+
+  .contact-method { display:flex; align-items:center; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--border); }
+  .contact-icon { width:44px; height:44px; background:rgba(0,212,255,0.1); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .contact-label { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--text-dim); letter-spacing:0.1em; margin-bottom:4px; }
+  .contact-value { font-size:0.95rem; color:#fff; }
+
+  .hotline-box { background:rgba(255,60,60,0.08); border:1px solid rgba(255,60,60,0.3); padding:2rem; text-align:center; margin-bottom:2rem; }
+  .hotline-label { font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--accent2); letter-spacing:0.3em; margin-bottom:0.5rem; }
+  .hotline-number { font-family:'Orbitron',sans-serif; font-size:2.5rem; font-weight:900; color:#fff; text-shadow:var(--glow-red); }
+
+  .section-divider { display:flex; align-items:center; gap:1rem; margin:3rem 0 2rem; }
+  .section-divider h3 { font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700; color:#fff; white-space:nowrap; letter-spacing:0.12em; }
+  .section-divider::after,.section-divider::before { content:''; flex:1; height:1px; background:var(--border); }
+
+  footer { background:var(--panel); border-top:1px solid var(--border); padding:2rem 4rem; margin-top:4rem; display:flex; justify-content:space-between; align-items:center; font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--text-dim); }
+
+  .alert-box { border:1px solid; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; gap:1rem; align-items:flex-start; }
+  .alert-box.warn { border-color:rgba(255,140,0,0.4); background:rgba(255,140,0,0.06); }
+  .alert-box.crit { border-color:rgba(255,60,60,0.4); background:rgba(255,60,60,0.06); }
+  .alert-box.info { border-color:rgba(0,212,255,0.3); background:rgba(0,212,255,0.05); }
+  .alert-box.ok { border-color:rgba(0,255,136,0.3); background:rgba(0,255,136,0.05); }
+  .alert-icon { font-size:1.2rem; flex-shrink:0; }
+  .alert-title { font-family:'Orbitron',sans-serif; font-size:0.78rem; font-weight:700; margin-bottom:4px; }
+  .alert-text { font-size:0.82rem; color:var(--text-dim); line-height:1.6; }
+
+  .checklist-item { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid rgba(14,42,74,0.3); }
+  .check-box { width:20px; height:20px; border:1px solid var(--accent); flex-shrink:0; display:flex; align-items:center; justify-content:center; margin-top:2px; cursor:pointer; }
+  .check-box.done { background:rgba(0,212,255,0.2); }
+  .check-text { font-size:0.88rem; color:var(--text-dim); line-height:1.5; }
+  .check-text strong { color:var(--text); display:block; margin-bottom:2px; }
+
+  /* ═══════════════ UPGRADED NETWORK RADAR ═══════════════ */
+  .radar-panel-body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .radar-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(0,20,40,0.8) 0%, #020810 80%);
+    overflow: hidden;
+  }
+
+  #radarCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Scanline overlay on radar */
+  .radar-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px
+    );
+    pointer-events: none;
+    border-radius: 50%;
+    width: 90%;
+    height: 90%;
+    top: 5%;
+    left: 5%;
+  }
+
+  /* Radar corner decorations */
+  .radar-corner {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .radar-corner.tl { top:4px; left:4px; border-width:2px 0 0 2px; }
+  .radar-corner.tr { top:4px; right:4px; border-width:2px 2px 0 0; }
+  .radar-corner.bl { bottom:4px; left:4px; border-width:0 0 2px 2px; }
+  .radar-corner.br { bottom:4px; right:4px; border-width:0 2px 2px 0; }
+
+  /* Radar readout bar */
+  .radar-readout {
+    border-top: 1px solid var(--border);
+    padding: 0.6rem 1.2rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .readout-cell {
+    padding: 0.4rem 0.8rem;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .readout-cell:last-child { border-right: none; }
+
+  .readout-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .readout-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .readout-value.rv-cyan { color: var(--accent); text-shadow: 0 0 8px rgba(0,212,255,0.5); }
+  .readout-value.rv-red  { color: var(--accent2); text-shadow: 0 0 8px rgba(255,60,60,0.5); }
+  .readout-value.rv-grn  { color: var(--accent3); text-shadow: 0 0 8px rgba(0,255,136,0.5); }
+  .readout-value.rv-org  { color: #ff8c00; text-shadow: 0 0 8px rgba(255,140,0,0.5); }
+
+  /* Threat log strip */
+  .radar-log {
+    border-top: 1px solid var(--border);
+    height: 68px;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+  }
+
+  .radar-log-inner {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    padding: 0.4rem 1.2rem;
+    line-height: 1.6;
+  }
+
+  .rlog-entry {
+    display: flex;
+    gap: 8px;
+    padding: 2px 0;
+    animation: logSlide 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @keyframes logSlide {
+    from { opacity:0; transform: translateY(-6px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .rlog-time { color: var(--text-dim); flex-shrink: 0; }
+  .rlog-sector { color: var(--accent); flex-shrink: 0; min-width: 48px; }
+  .rlog-msg { overflow: hidden; text-overflow: ellipsis; }
+
+  /* Header live count */
+  .radar-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+  .radar-live-count {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+  .radar-live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.62rem;
+    color: var(--accent3);
+  }
+  .radar-live-indicator::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent3);
+    box-shadow: 0 0 6px var(--accent3);
+    animation: blink 1.2s infinite;
+  }
+
+  /* ════════════════════════ THREAT MAP STYLES ════════════════════════ */
+  #page-threatmap { background:var(--bg); }
+  .map-page-layout { display:grid; grid-template-columns:1fr 320px; grid-template-rows:auto 1fr; gap:0; height:calc(100vh - 60px); overflow:hidden; }
+  .map-stats-bar { grid-column:1 / -1; background:rgba(4,13,26,0.95); border-bottom:1px solid var(--border); display:flex; align-items:stretch; padding:0; height:64px; }
+  .map-stat { flex:1; display:flex; flex-direction:column; justify-content:center; padding:0 1.5rem; border-right:1px solid var(--border); position:relative; }
+  .map-stat:last-child { border-right:none; }
+  .map-stat-label { font-family:'Share Tech Mono',monospace; font-size:0.6rem; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:4px; }
+  .map-stat-value { font-family:'Orbitron',sans-serif; font-size:1.3rem; font-weight:900; color:#fff; }
+  .map-stat-value.live { color:var(--accent2); animation:count-glow 1s ease-in-out infinite alternate; }
+  .map-stat-value.cyan { color:var(--accent); }
+  .map-stat-value.grn { color:var(--accent3); }
+  .map-stat-value.org { color:#ff8c00; }
+  @keyframes count-glow { from{text-shadow:none} to{text-shadow:0 0 15px var(--accent2)} }
+  .map-main-area { position:relative; overflow:hidden; background:#020810; }
+  #worldCanvas { width:100%; height:100%; display:block; }
+  #arcSvg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+  .map-sidebar { background:rgba(4,13,26,0.98); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+  .sidebar-header { padding:1rem 1.2rem; border-bottom:1px solid var(--border); font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--accent); letter-spacing:0.2em; text-transform:uppercase; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .live-badge { display:flex; align-items:center; gap:5px; color:var(--accent2); font-size:0.65rem; }
+  .live-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent2); animation:blink 0.8s infinite; box-shadow:0 0 6px var(--accent2); }
+  .attack-feed { flex:1; overflow-y:auto; padding:0; }
+  .attack-feed::-webkit-scrollbar { width:3px; }
+  .attack-feed::-webkit-scrollbar-track { background:transparent; }
+  .attack-feed::-webkit-scrollbar-thumb { background:var(--border); }
+  .feed-item { padding:0.8rem 1.2rem; border-bottom:1px solid rgba(14,42,74,0.4); animation:feedSlide 0.4s ease; cursor:pointer; transition:background 0.2s; }
+  .feed-item:hover { background:rgba(0,212,255,0.04); }
+  @keyframes feedSlide { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+  .feed-item-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .feed-attacker { font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--accent2); display:flex; align-items:center; gap:5px; }
+  .feed-arrow { color:var(--text-dim); margin:0 4px; }
+  .feed-target { font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--accent3); }
+  .feed-time { font-family:'Share Tech Mono',monospace; font-size:0.6rem; color:var(--text-dim); }
+  .feed-detail { font-size:0.75rem; color:var(--text-dim); display:flex; gap:8px; align-items:center; margin-top:3px; }
+  .feed-type-tag { font-family:'Share Tech Mono',monospace; font-size:0.6rem; padding:1px 6px; border-radius:2px; }
+  .tag-ransomware { background:rgba(255,60,60,0.2); color:var(--accent2); }
+  .tag-ddos { background:rgba(255,140,0,0.15); color:#ff8c00; }
+  .tag-phishing { background:rgba(255,214,0,0.1); color:#ffd600; }
+  .tag-apt { background:rgba(150,0,255,0.15); color:#b070ff; }
+  .tag-malware { background:rgba(0,212,255,0.1); color:var(--accent); }
+  .sidebar-bottom { border-top:1px solid var(--border); padding:1rem 1.2rem; flex-shrink:0; }
+  .top-attacker-label { font-family:'Share Tech Mono',monospace; font-size:0.62rem; color:var(--text-dim); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:0.8rem; }
+  .attacker-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .attacker-flag { font-size:1rem; width:22px; text-align:center; }
+  .attacker-country { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--text); flex:1; }
+  .attacker-bar-wrap { flex:1; }
+  .attacker-bar { height:4px; background:var(--accent2); box-shadow:0 0 6px var(--accent2); border-radius:0; transition:width 1s ease; }
+  .attacker-count { font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--accent2); min-width:32px; text-align:right; }
+  .map-controls { position:absolute; bottom:16px; left:16px; display:flex; gap:8px; z-index:10; }
+  .map-filter-btn { background:rgba(6,15,30,0.9); border:1px solid var(--border); color:var(--text-dim); font-family:'Share Tech Mono',monospace; font-size:0.62rem; padding:5px 12px; cursor:pointer; letter-spacing:0.1em; transition:all 0.2s; text-transform:uppercase; }
+  .map-filter-btn:hover,.map-filter-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,0.08); }
+  .map-legend { position:absolute; bottom:16px; right:16px; background:rgba(6,15,30,0.9); border:1px solid var(--border); padding:10px 14px; z-index:10; }
+  .legend-title { font-family:'Share Tech Mono',monospace; font-size:0.6rem; color:var(--text-dim); letter-spacing:0.15em; margin-bottom:8px; text-transform:uppercase; }
+  .legend-item { display:flex; align-items:center; gap:8px; margin-bottom:4px; font-family:'Share Tech Mono',monospace; font-size:0.62rem; color:var(--text-dim); }
+  .legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  #cityTooltip { position:absolute; background:rgba(6,15,30,0.95); border:1px solid var(--accent); padding:8px 12px; font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--accent); pointer-events:none; z-index:20; display:none; white-space:nowrap; box-shadow:var(--glow); }
+
+  @keyframes pulse-out { 0%{r:4px;opacity:0.8} 100%{r:20px;opacity:0} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  @keyframes pulse-red { 0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,0.4)} 50%{box-shadow:0 0 0 8px rgba(255,60,60,0)} }
+  @keyframes slideInRight { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .fade-in { animation:fadeInUp 0.5s ease both; }
+  .fade-in:nth-child(1){animation-delay:0.05s}
+  .fade-in:nth-child(2){animation-delay:0.1s}
+  .fade-in:nth-child(3){animation-delay:0.15s}
+  .fade-in:nth-child(4){animation-delay:0.2s}
+  .fade-in:nth-child(5){animation-delay:0.25s}
+  .fade-in:nth-child(6){animation-delay:0.3s}
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+
+  @media(max-width:900px) {
+    nav { overflow-x:auto; }
+    .nav-links button { padding:0 8px; font-size:0.6rem; }
+    .hero { padding:2rem; }
+    .hero-stats { position:static; transform:none; margin-top:2rem; flex-direction:row; flex-wrap:wrap; }
+    .page-content { padding:2rem 1.5rem; }
+    .grid-2,.grid-3,.grid-4 { grid-template-columns:1fr; }
+    .map-page-layout { grid-template-columns:1fr; grid-template-rows:auto 1fr auto; height:auto; }
+    .map-sidebar { max-height:350px; border-left:none; border-top:1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">
+    <div class="dot"></div>
+    CERSA
+  </div>
+  <div class="nav-links">
+    <button class="active" onclick="showPage('home')">HOME</button>
+    <button onclick="showPage('dashboard')">DASHBOARD</button>
+    <button onclick="showPage('threatmap')">THREAT MAP</button>
+    <button onclick="showPage('threats')">THREATS</button>
+    <button onclick="showPage('response')">RESPONSE</button>
+    <button onclick="showPage('tools')">TOOLS</button>
+    <button onclick="showPage('team')">TEAM</button>
+    <button onclick="showPage('resources')">RESOURCES</button>
+    <button onclick="showPage('contact')">CONTACT</button>
+  </div>
+  <div class="alert-badge">⚠ THREAT LEVEL: HIGH</div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="ticker-bar" style="margin-top:60px">
+    <span class="ticker-inner">
+      ⚠ ACTIVE THREAT: Ransomware campaign targeting healthcare sector &nbsp;|&nbsp;
+      🔴 DDoS attack detected — Eastern Europe origin &nbsp;|&nbsp;
+      ⚠ Zero-day exploit patched — CVE-2025-9912 &nbsp;|&nbsp;
+      🔴 Phishing campaign impersonating government agencies &nbsp;|&nbsp;
+      ⚠ Supply chain compromise identified in OpenSource repo &nbsp;|&nbsp;
+      ⚠ ACTIVE THREAT: Ransomware campaign targeting healthcare sector &nbsp;|&nbsp;
+      🔴 DDoS attack detected — Eastern Europe origin &nbsp;|&nbsp;
+    </span>
+  </div>
+  <div class="hero">
+    <div class="hero-tag">CERSA v3.1 — SYSTEM ONLINE</div>
+    <h1>Cyber Emergency<br><span>Response</span> &<br>Solution App</h1>
+    <p>Real-time threat detection, rapid incident response, and intelligent cyber defense solutions for critical infrastructure and enterprise environments.</p>
+    <div class="hero-buttons">
+      <button class="btn-primary" onclick="showPage('dashboard')">ACCESS DASHBOARD</button>
+      <button class="btn-secondary" onclick="showPage('threatmap')">LIVE THREAT MAP</button>
+      <button class="btn-secondary" onclick="showPage('response')">REPORT INCIDENT</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-box"><div class="stat-label">Threats Neutralized</div><div class="stat-value">14,832</div></div>
+      <div class="stat-box"><div class="stat-label">Active Incidents</div><div class="stat-value red">7</div></div>
+      <div class="stat-box"><div class="stat-label">System Status</div><div class="stat-value green">ONLINE</div></div>
+    </div>
+  </div>
+  <div class="page-content" style="padding-top:0">
+    <div class="section-divider"><h3>CORE CAPABILITIES</h3></div>
+    <div class="grid-4">
+      <div class="threat-card fade-in"><div class="threat-icon">🛡️</div><div class="threat-name">Threat Detection</div><div class="threat-desc">AI-powered real-time monitoring across all network endpoints and cloud infrastructure.</div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">⚡</div><div class="threat-name">Rapid Response</div><div class="threat-desc">Automated and human-guided incident response with average containment in under 4 minutes.</div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">🔍</div><div class="threat-name">Forensic Analysis</div><div class="threat-desc">Deep-dive post-incident forensics to identify root cause and prevent recurrence.</div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">🌐</div><div class="threat-name">Global Intel Feed</div><div class="threat-desc">Continuous threat intelligence updates from 200+ global sources and government agencies.</div></div>
+    </div>
+  </div>
+  <footer><span>CERSA © 2025 — All systems operational</span><span><span class="status-dot status-live"></span>LIVE MONITORING</span><span>Classification: RESTRICTED</span></footer>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <div class="page-content">
+    <div class="page-title">Threat Dashboard</div>
+    <div class="page-subtitle">// REAL-TIME SITUATIONAL AWARENESS</div>
+    <div class="alert-box crit fade-in"><div class="alert-icon">🔴</div><div><div class="alert-title" style="color:var(--accent2)">CRITICAL — Ransomware Activity Detected</div><div class="alert-text">Lateral movement observed in Sector 3 network. Automated isolation protocols engaged. Human review required.</div></div></div>
+    <div class="alert-box warn fade-in"><div class="alert-icon">🟠</div><div><div class="alert-title" style="color:#ff8c00">WARNING — Unusual Data Exfiltration Pattern</div><div class="alert-text">Anomalous outbound traffic detected from 192.168.42.x subnet. Volume: 4.2GB in last 15 minutes.</div></div></div>
+    <div class="grid-2" style="margin-top:2rem">
+      <div class="panel fade-in">
+        <div class="panel-header">🔴 ACTIVE INCIDENTS</div>
+        <div class="panel-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Type</th><th>Severity</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>INC-2509</td><td>Ransomware</td><td><span class="badge badge-red">CRITICAL</span></td><td><span class="status-dot status-crit"></span>Containment</td></tr>
+              <tr><td>INC-2508</td><td>Data Exfil</td><td><span class="badge badge-red">HIGH</span></td><td><span class="status-dot status-warn"></span>Investigating</td></tr>
+              <tr><td>INC-2507</td><td>Phishing</td><td><span class="badge badge-blue">MEDIUM</span></td><td><span class="status-dot status-live"></span>Resolved</td></tr>
+              <tr><td>INC-2506</td><td>DDoS</td><td><span class="badge badge-red">HIGH</span></td><td><span class="status-dot status-warn"></span>Mitigation</td></tr>
+              <tr><td>INC-2505</td><td>Malware</td><td><span class="badge badge-blue">MEDIUM</span></td><td><span class="status-dot status-live"></span>Resolved</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel fade-in">
+        <div class="panel-header">📊 SYSTEM HEALTH METRICS</div>
+        <div class="panel-body">
+          <div class="progress-bar-wrap"><div class="progress-label"><span>Firewall Integrity</span><span>98%</span></div><div class="progress-track"><div class="progress-fill green" style="width:98%"></div></div></div>
+          <div class="progress-bar-wrap"><div class="progress-label"><span>Endpoint Coverage</span><span>94%</span></div><div class="progress-track"><div class="progress-fill" style="width:94%"></div></div></div>
+          <div class="progress-bar-wrap"><div class="progress-label"><span>Patch Compliance</span><span>87%</span></div><div class="progress-track"><div class="progress-fill" style="width:87%"></div></div></div>
+          <div class="progress-bar-wrap"><div class="progress-label"><span>Threat Detection Rate</span><span>99.2%</span></div><div class="progress-track"><div class="progress-fill green" style="width:99%"></div></div></div>
+          <div class="progress-bar-wrap"><div class="progress-label"><span>Unpatched CVEs</span><span>13%</span></div><div class="progress-track"><div class="progress-fill red" style="width:13%"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:1.5rem">
+      <div class="panel fade-in">
+        <div class="panel-header">🌍 THREAT ORIGIN MAP — <span style="color:var(--accent2)">LIVE</span></div>
+        <div class="panel-body" style="padding:0;position:relative">
+          <canvas id="miniMapCanvas" style="width:100%;height:240px;display:block"></canvas>
+          <svg id="miniArcSvg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></svg>
+          <div style="position:absolute;bottom:8px;right:8px;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim)">
+            <span class="status-dot status-crit"></span>Russia &nbsp; <span class="status-dot status-warn"></span>China &nbsp; <span class="status-dot status-live"></span>Iran
+          </div>
+          <div style="position:absolute;top:8px;right:8px">
+            <button class="btn-secondary" style="font-size:0.6rem;padding:5px 12px;clip-path:none" onclick="showPage('threatmap')">FULL MAP →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════ UPGRADED NETWORK RADAR PANEL ═══════ -->
+      <div class="panel fade-in" id="radarPanel">
+        <div class="panel-header">
+          📡 NETWORK RADAR
+          <div class="radar-header-right">
+            <span class="radar-live-count" id="radarThreatCount">0 THREATS</span>
+            <span class="radar-live-indicator">SCANNING</span>
+          </div>
+        </div>
+
+        <div class="radar-panel-body">
+          <!-- Canvas -->
+          <div class="radar-wrap" id="radarWrap">
+            <canvas id="radarCanvas"></canvas>
+            <div class="radar-corner tl"></div>
+            <div class="radar-corner tr"></div>
+            <div class="radar-corner bl"></div>
+            <div class="radar-corner br"></div>
+          </div>
+
+          <!-- Live readout strip -->
+          <div class="radar-readout">
+            <div class="readout-cell">
+              <div class="readout-label">DETECTED</div>
+              <div class="readout-value rv-red" id="rdr-detected">0</div>
+            </div>
+            <div class="readout-cell">
+              <div class="readout-label">TRACKED</div>
+              <div class="readout-value rv-cyan" id="rdr-tracked">0</div>
+            </div>
+            <div class="readout-cell">
+              <div class="readout-label">NEUTRALIZED</div>
+              <div class="readout-value rv-grn" id="rdr-neutral">0</div>
+            </div>
+            <div class="readout-cell">
+              <div class="readout-label">SWEEP Hz</div>
+              <div class="readout-value rv-org" id="rdr-hz">0.25</div>
+            </div>
+          </div>
+
+          <!-- Log strip -->
+          <div class="radar-log">
+            <div class="radar-log-inner" id="radarLog"></div>
+          </div>
+        </div>
+      </div>
+      <!-- ═══════ END RADAR PANEL ═══════ -->
+
+    </div>
+  </div>
+  <footer><span>Dashboard last updated: <span id="dash-time"></span></span><span><span class="status-dot status-live"></span>AUTO-REFRESH: ON</span><span>Session: SECURE</span></footer>
+</div>
+
+<!-- THREAT MAP PAGE -->
+<div id="page-threatmap" class="page">
+  <div class="map-page-layout">
+    <div class="map-stats-bar">
+      <div class="map-stat"><div class="map-stat-label">Attacks / Min</div><div class="map-stat-value live" id="atkPerMin">0</div></div>
+      <div class="map-stat"><div class="map-stat-label">Total Today</div><div class="map-stat-value cyan" id="totalToday">41,293</div></div>
+      <div class="map-stat"><div class="map-stat-label">Countries Attacking</div><div class="map-stat-value org" id="cntryAtk">23</div></div>
+      <div class="map-stat"><div class="map-stat-label">Countries Targeted</div><div class="map-stat-value cyan" id="cntryTgt">67</div></div>
+      <div class="map-stat"><div class="map-stat-label">Blocked / Mitigated</div><div class="map-stat-value grn" id="blocked">39,847</div></div>
+      <div class="map-stat"><div class="map-stat-label">Top Attack Type</div><div class="map-stat-value" style="font-size:0.9rem;color:#ff3c3c">PHISHING</div></div>
+    </div>
+    <div class="map-main-area" id="mapArea">
+      <canvas id="worldCanvas"></canvas>
+      <svg id="arcSvg"></svg>
+      <div id="cityTooltip"></div>
+      <div class="map-controls">
+        <button class="map-filter-btn active" onclick="setFilter('all',this)">ALL</button>
+        <button class="map-filter-btn" onclick="setFilter('ransomware',this)">RANSOMWARE</button>
+        <button class="map-filter-btn" onclick="setFilter('ddos',this)">DDOS</button>
+        <button class="map-filter-btn" onclick="setFilter('phishing',this)">PHISHING</button>
+        <button class="map-filter-btn" onclick="setFilter('apt',this)">APT</button>
+        <button class="map-filter-btn" onclick="setFilter('malware',this)">MALWARE</button>
+      </div>
+      <div class="map-legend">
+        <div class="legend-title">LEGEND</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff3c3c;box-shadow:0 0 5px #ff3c3c"></div>Attack Origin</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00d4ff;box-shadow:0 0 5px #00d4ff"></div>Target Location</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00ff88;box-shadow:0 0 5px #00ff88"></div>Blocked / Mitigated</div>
+        <div class="legend-item" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+          <div style="width:24px;height:2px;background:linear-gradient(90deg,#ff3c3c,transparent);flex-shrink:0"></div>Active Arc
+        </div>
+        <div class="legend-item">
+          <div style="width:24px;height:2px;background:linear-gradient(90deg,#00ff88,transparent);flex-shrink:0"></div>Blocked Arc
+        </div>
+      </div>
+    </div>
+    <div class="map-sidebar">
+      <div class="sidebar-header">LIVE ATTACK FEED<span class="live-badge">LIVE</span></div>
+      <div class="attack-feed" id="attackFeed"></div>
+      <div class="sidebar-bottom">
+        <div class="top-attacker-label">TOP ATTACKING NATIONS</div>
+        <div class="attacker-row"><div class="attacker-flag">🇷🇺</div><div class="attacker-country">Russia</div><div class="attacker-bar-wrap"><div class="attacker-bar" id="bar-ru" style="width:100%"></div></div><div class="attacker-count" id="cnt-ru">342</div></div>
+        <div class="attacker-row"><div class="attacker-flag">🇨🇳</div><div class="attacker-country">China</div><div class="attacker-bar-wrap"><div class="attacker-bar" id="bar-cn" style="width:64%;background:#ff8c00;box-shadow:0 0 6px #ff8c00"></div></div><div class="attacker-count" id="cnt-cn" style="color:#ff8c00">218</div></div>
+        <div class="attacker-row"><div class="attacker-flag">🇰🇵</div><div class="attacker-country">N. Korea</div><div class="attacker-bar-wrap"><div class="attacker-bar" id="bar-kp" style="width:55%;background:#ffd600;box-shadow:0 0 6px #ffd600"></div></div><div class="attacker-count" id="cnt-kp" style="color:#ffd600">187</div></div>
+        <div class="attacker-row"><div class="attacker-flag">🇮🇷</div><div class="attacker-country">Iran</div><div class="attacker-bar-wrap"><div class="attacker-bar" id="bar-ir" style="width:28%;background:#b070ff;box-shadow:0 0 6px #b070ff"></div></div><div class="attacker-count" id="cnt-ir" style="color:#b070ff">94</div></div>
+        <div class="attacker-row"><div class="attacker-flag">🇧🇷</div><div class="attacker-country">Brazil</div><div class="attacker-bar-wrap"><div class="attacker-bar" id="bar-br" style="width:18%;background:#00d4ff;box-shadow:0 0 6px #00d4ff"></div></div><div class="attacker-count" id="cnt-br" style="color:#00d4ff">62</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- THREATS -->
+<div id="page-threats" class="page">
+  <div class="page-content">
+    <div class="page-title">Threat Intelligence</div>
+    <div class="page-subtitle">// CURRENT THREAT LANDSCAPE — UPDATED HOURLY</div>
+    <div class="grid-3">
+      <div class="threat-card fade-in"><div class="threat-icon">💀</div><div class="threat-name">Ransomware-as-a-Service</div><div class="threat-desc">LockBit 4.0 and BlackCat variants targeting critical infrastructure. Multi-stage extortion via data encryption and publication threats.</div><div><span class="severity sev-critical">CRITICAL</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">🎣</div><div class="threat-name">Spear Phishing</div><div class="threat-desc">Highly targeted phishing using AI-generated content mimicking executive communications. BEC fraud causing financial losses exceeding $3.2M average.</div><div><span class="severity sev-critical">CRITICAL</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">🦠</div><div class="threat-name">Zero-Day Exploits</div><div class="threat-desc">Active exploitation of CVE-2025-9912 in popular enterprise VPN software. Patching required immediately across all affected systems.</div><div><span class="severity sev-critical">CRITICAL</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">🌊</div><div class="threat-name">DDoS Amplification</div><div class="threat-desc">DNS and NTP amplification attacks exceeding 3.2 Tbps. Botnet of 1.4M compromised IoT devices actively targeting financial institutions.</div><div><span class="severity sev-high">HIGH</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">🔗</div><div class="threat-name">Supply Chain Attack</div><div class="threat-desc">Malicious packages injected into open-source repositories. Affects npm, PyPI ecosystems. Review all third-party dependencies immediately.</div><div><span class="severity sev-high">HIGH</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">👁️</div><div class="threat-name">APT Intrusion</div><div class="threat-desc">State-sponsored Advanced Persistent Threat actors conducting long-term infiltration campaigns against defense contractors and government networks.</div><div><span class="severity sev-high">HIGH</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">📱</div><div class="threat-name">Mobile Malware</div><div class="threat-desc">Banking trojans distributed through fake app stores. Targets Android and iOS. Over 500K infections detected in last 30 days.</div><div><span class="severity sev-medium">MEDIUM</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">☁️</div><div class="threat-name">Cloud Misconfig</div><div class="threat-desc">Exposed S3 buckets and unsecured Azure Blob storage leaking sensitive corporate data. Automated scanners actively exploiting misconfigured resources.</div><div><span class="severity sev-medium">MEDIUM</span></div></div>
+      <div class="threat-card fade-in"><div class="threat-icon">🔓</div><div class="threat-name">Credential Stuffing</div><div class="threat-desc">Automated attacks using 14B+ leaked credentials. Enable MFA on all accounts. Unusual login attempts from 47 countries detected this week.</div><div><span class="severity sev-low">LOW</span></div></div>
+    </div>
+    <div class="section-divider" style="margin-top:3rem"><h3>THREAT TRENDS — LAST 30 DAYS</h3></div>
+    <div class="panel">
+      <div class="panel-header">📈 INCIDENT VOLUME BY CATEGORY</div>
+      <div class="panel-body" style="padding:2rem">
+        <div class="progress-bar-wrap"><div class="progress-label"><span>Ransomware</span><span>847 incidents</span></div><div class="progress-track"><div class="progress-fill red" style="width:85%"></div></div></div>
+        <div class="progress-bar-wrap"><div class="progress-label"><span>Phishing / BEC</span><span>1,203 incidents</span></div><div class="progress-track"><div class="progress-fill red" style="width:100%"></div></div></div>
+        <div class="progress-bar-wrap"><div class="progress-label"><span>DDoS Attacks</span><span>412 incidents</span></div><div class="progress-track"><div class="progress-fill" style="width:40%"></div></div></div>
+        <div class="progress-bar-wrap"><div class="progress-label"><span>Malware</span><span>638 incidents</span></div><div class="progress-track"><div class="progress-fill" style="width:62%"></div></div></div>
+        <div class="progress-bar-wrap"><div class="progress-label"><span>Insider Threats</span><span>89 incidents</span></div><div class="progress-track"><div class="progress-fill green" style="width:9%"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <footer><span>Threat data sourced from CERSA Intel Network</span><span>200+ global feeds</span><span>Updated: LIVE</span></footer>
+</div>
+
+<!-- RESPONSE -->
+<div id="page-response" class="page">
+  <div class="page-content">
+    <div class="page-title">Incident Response</div>
+    <div class="page-subtitle">// REPORT, TRACK & MANAGE INCIDENTS</div>
+    <div class="grid-2">
+      <div class="panel fade-in">
+        <div class="panel-header">🚨 REPORT NEW INCIDENT</div>
+        <div class="panel-body">
+          <div class="form-group"><label class="form-label">Incident Type *</label><select class="form-select"><option value="">— Select Type —</option><option>Ransomware / Encryption</option><option>Data Breach / Exfiltration</option><option>Phishing / Social Engineering</option><option>DDoS Attack</option><option>Unauthorized Access</option><option>Malware Infection</option><option>Insider Threat</option><option>Supply Chain Compromise</option><option>Other</option></select></div>
+          <div class="form-group"><label class="form-label">Severity Level *</label><select class="form-select"><option>P1 — Critical (Systems Down)</option><option>P2 — High (Major Impact)</option><option>P3 — Medium (Limited Impact)</option><option>P4 — Low (Minimal Impact)</option></select></div>
+          <div class="form-group"><label class="form-label">Affected Systems</label><input type="text" class="form-input" placeholder="e.g. ERP-Server-01, HR-Workstation-12"></div>
+          <div class="form-group"><label class="form-label">Discovery Time</label><input type="datetime-local" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Description *</label><textarea class="form-textarea" placeholder="Describe what happened, what you observed, and any immediate actions taken..."></textarea></div>
+          <div class="form-group"><label class="form-label">Reporter Contact</label><input type="email" class="form-input" placeholder="your.email@organization.com"></div>
+          <button class="btn-primary" onclick="submitIncident()" style="width:100%">SUBMIT INCIDENT REPORT</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1.5rem">
+        <div class="panel fade-in">
+          <div class="panel-header">📋 RANSOMWARE RESPONSE CHECKLIST</div>
+          <div class="panel-body" style="padding:0 1.5rem">
+            <div class="checklist-item"><div class="check-box done">✓</div><div class="check-text"><strong>ISOLATE affected systems immediately</strong>Disconnect from network — do NOT shut down. Preserve volatile memory.</div></div>
+            <div class="checklist-item"><div class="check-box done">✓</div><div class="check-text"><strong>NOTIFY incident response team</strong>Contact on-call CERT via hotline. Log incident ID for tracking.</div></div>
+            <div class="checklist-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text"><strong>PRESERVE forensic evidence</strong>Create disk images before any remediation. Document chain of custody.</div></div>
+            <div class="checklist-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text"><strong>IDENTIFY ransomware variant</strong>Use ID Ransomware or CERSA Analyzer to identify strain and check for decryptors.</div></div>
+            <div class="checklist-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text"><strong>RESTORE from clean backups</strong>Verify backup integrity before restoration. Ensure backups are uninfected.</div></div>
+            <div class="checklist-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text"><strong>REPORT to authorities</strong>File report with CISA, FBI IC3, and relevant national cybercrime units.</div></div>
+          </div>
+        </div>
+        <div class="panel fade-in">
+          <div class="panel-header">🕐 RESPONSE TIMELINE — INC-2509</div>
+          <div class="panel-body">
+            <div class="timeline">
+              <div class="timeline-item"><div class="timeline-time">14:23 — Detection</div><div class="timeline-title">Anomaly Detected</div><div class="timeline-desc">CERSA AI flagged unusual encryption activity across 14 endpoints.</div></div>
+              <div class="timeline-item"><div class="timeline-time">14:25 — Auto-Response</div><div class="timeline-title">Network Isolation</div><div class="timeline-desc">Automated playbook isolated affected subnet. 47 devices quarantined.</div></div>
+              <div class="timeline-item"><div class="timeline-time">14:31 — Human Response</div><div class="timeline-title">CERT Engaged</div><div class="timeline-desc">On-call analyst confirmed attack. Escalated to P1. Forensics team deployed.</div></div>
+              <div class="timeline-item"><div class="timeline-time">15:02 — Ongoing</div><div class="timeline-title">Eradication Phase</div><div class="timeline-desc">Malware samples collected. Restore from backup initiated for 31 systems.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><span>All incidents are encrypted and logged securely</span><span>24/7 On-call coverage</span><span>CERT Hotline: 1-800-CERSA-01</span></footer>
+</div>
+
+<!-- TOOLS -->
+<div id="page-tools" class="page">
+  <div class="page-content">
+    <div class="page-title">Security Tools</div>
+    <div class="page-subtitle">// INTEGRATED CYBER DEFENSE TOOLKIT</div>
+    <div class="grid-3">
+      <div class="panel fade-in"><div class="panel-header">🔬 MALWARE ANALYZER</div><div class="panel-body"><div class="threat-desc" style="margin-bottom:1.5rem">Upload suspicious files for automated sandboxed analysis. Supports PE, PDF, Office docs, scripts.</div><div style="border:2px dashed var(--border);padding:2rem;text-align:center;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:0.75rem;cursor:pointer;transition:all 0.3s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">📎 DROP FILE HERE OR CLICK TO UPLOAD<br><br>Max 50MB • All file types supported</div><button class="btn-primary" style="width:100%;margin-top:1rem">ANALYZE FILE</button></div></div>
+      <div class="panel fade-in"><div class="panel-header">🌐 IP REPUTATION CHECK</div><div class="panel-body"><div class="threat-desc" style="margin-bottom:1.5rem">Check IP addresses, domains, and URLs against 50+ threat intelligence feeds in real-time.</div><input class="form-input" placeholder="Enter IP, domain, or URL..." style="margin-bottom:1rem"><button class="btn-primary" style="width:100%">CHECK REPUTATION</button><div style="margin-top:1.5rem"><div class="alert-box ok"><div class="alert-icon">✅</div><div><div class="alert-title" style="color:var(--accent3)">CLEAN</div><div class="alert-text">Last checked IP: 8.8.8.8 — No threats found across 52 feeds</div></div></div></div></div></div>
+      <div class="panel fade-in"><div class="panel-header">🔐 HASH VERIFICATION</div><div class="panel-body"><div class="threat-desc" style="margin-bottom:1.5rem">Verify file hashes against known malware databases. Supports MD5, SHA-1, SHA-256, SHA-512.</div><input class="form-input" placeholder="Paste file hash here..." style="margin-bottom:0.8rem"><select class="form-select" style="margin-bottom:1rem"><option>SHA-256</option><option>MD5</option><option>SHA-1</option><option>SHA-512</option></select><button class="btn-primary" style="width:100%">VERIFY HASH</button></div></div>
+      <div class="panel fade-in"><div class="panel-header">📡 NETWORK SCANNER</div><div class="panel-body"><div class="threat-desc" style="margin-bottom:1.5rem">Scan network ranges for open ports, running services, and known vulnerabilities.</div><input class="form-input" placeholder="IP Range (e.g. 192.168.1.0/24)" style="margin-bottom:0.8rem"><select class="form-select" style="margin-bottom:1rem"><option>Quick Scan (Top 1000 ports)</option><option>Full Scan (All 65535 ports)</option><option>Vulnerability Scan</option><option>Stealth Scan</option></select><button class="btn-primary" style="width:100%">START SCAN</button></div></div>
+      <div class="panel fade-in"><div class="panel-header">🔑 PASSWORD AUDITOR</div><div class="panel-body"><div class="threat-desc" style="margin-bottom:1.5rem">Audit password strength and check against breach databases without transmitting actual passwords.</div><input type="password" class="form-input" placeholder="Test password strength..." style="margin-bottom:1rem"><div style="background:rgba(14,42,74,0.3);padding:1rem;margin-bottom:1rem"><div class="progress-label"><span style="font-size:0.75rem;font-family:'Share Tech Mono',monospace;color:var(--text-dim)">Strength</span><span style="color:var(--accent3);font-family:'Share Tech Mono',monospace;font-size:0.75rem">STRONG</span></div><div class="progress-track"><div class="progress-fill green" style="width:82%"></div></div></div><button class="btn-primary" style="width:100%">CHECK BREACHES</button></div></div>
+      <div class="panel fade-in"><div class="panel-header">📊 LOG ANALYZER</div><div class="panel-body"><div class="threat-desc" style="margin-bottom:1.5rem">Parse and analyze system, network, and application logs to identify anomalous patterns and IOCs.</div><select class="form-select" style="margin-bottom:0.8rem"><option>Windows Event Log</option><option>Syslog / Linux</option><option>Apache / Nginx</option><option>Firewall Logs</option><option>Custom Format</option></select><textarea class="form-textarea" placeholder="Paste log content here..." style="min-height:80px;margin-bottom:1rem"></textarea><button class="btn-primary" style="width:100%">ANALYZE LOGS</button></div></div>
+    </div>
+    <div class="section-divider"><h3>TOOL USAGE STATISTICS</h3></div>
+    <div class="panel"><div class="panel-body"><div class="grid-4"><div style="text-align:center;padding:1.5rem"><div style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--accent)">48,291</div><div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-top:4px">FILES ANALYZED</div></div><div style="text-align:center;padding:1.5rem"><div style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--accent2)">3,847</div><div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-top:4px">THREATS FOUND</div></div><div style="text-align:center;padding:1.5rem"><div style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--accent3)">99.1%</div><div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-top:4px">DETECTION RATE</div></div><div style="text-align:center;padding:1.5rem"><div style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:#ff8c00">4.2s</div><div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-top:4px">AVG SCAN TIME</div></div></div></div></div>
+  </div>
+  <footer><span>All tools run in isolated sandboxes</span><span>No data is retained after analysis</span><span>CERSA Tools v3.1</span></footer>
+</div>
+
+<!-- TEAM -->
+<div id="page-team" class="page">
+  <div class="page-content">
+    <div class="page-title">Response Team</div>
+    <div class="page-subtitle">// EXPERT ANALYSTS & INCIDENT COMMANDERS</div>
+    <div class="alert-box info fade-in"><div class="alert-icon">ℹ️</div><div><div class="alert-title" style="color:var(--accent)">24/7 ON-CALL COVERAGE</div><div class="alert-text">Our Tier 1–3 analysts provide round-the-clock coverage. Average response time to critical incidents: 4 minutes.</div></div></div>
+    <div class="grid-4" style="margin-top:2rem">
+      <div class="team-card fade-in"><div class="avatar">RK</div><div class="team-name">Dr. Rajesh Kumar</div><div class="team-role">CISO / Incident Commander</div><div class="team-bio">20+ years in cyber defense. Former NSA analyst. Specializes in nation-state threat attribution and APT hunting.</div><div style="margin-top:1rem"><span class="badge badge-red">ON CALL</span></div></div>
+      <div class="team-card fade-in"><div class="avatar" style="background:linear-gradient(135deg,var(--accent3),var(--accent))">SP</div><div class="team-name">Sarah Petrov</div><div class="team-role">Lead Threat Analyst</div><div class="team-bio">Malware reverse engineer and dark web intelligence specialist. Created CERSA's automated threat classification engine.</div><div style="margin-top:1rem"><span class="badge badge-green">AVAILABLE</span></div></div>
+      <div class="team-card fade-in"><div class="avatar" style="background:linear-gradient(135deg,#ff8c00,var(--accent2))">JC</div><div class="team-name">James Chen</div><div class="team-role">Digital Forensics Lead</div><div class="team-bio">Expert in memory forensics and incident reconstruction. Published researcher in ransomware behavior analysis and recovery.</div><div style="margin-top:1rem"><span class="badge badge-red">ACTIVE CASE</span></div></div>
+      <div class="team-card fade-in"><div class="avatar" style="background:linear-gradient(135deg,#7b2ff7,var(--accent))">AM</div><div class="team-name">Ayasha Martinez</div><div class="team-role">SOC Manager</div><div class="team-bio">Security operations expert managing 24/7 monitoring across 400+ client environments. CISSP, CISM certified.</div><div style="margin-top:1rem"><span class="badge badge-green">AVAILABLE</span></div></div>
+    </div>
+    <div class="section-divider"><h3>CERTIFICATIONS & CLEARANCES</h3></div>
+    <div style="display:flex;flex-wrap:wrap;gap:1rem">
+      <span class="badge badge-blue" style="padding:8px 16px;font-size:0.75rem">CISSP</span>
+      <span class="badge badge-blue" style="padding:8px 16px;font-size:0.75rem">CEH</span>
+      <span class="badge badge-blue" style="padding:8px 16px;font-size:0.75rem">OSCP</span>
+      <span class="badge badge-blue" style="padding:8px 16px;font-size:0.75rem">CISM</span>
+      <span class="badge badge-blue" style="padding:8px 16px;font-size:0.75rem">GCIH</span>
+      <span class="badge badge-red" style="padding:8px 16px;font-size:0.75rem">TS/SCI CLEARANCE</span>
+      <span class="badge badge-green" style="padding:8px 16px;font-size:0.75rem">SOC 2 TYPE II</span>
+    </div>
+  </div>
+  <footer><span>CERSA Response Team — Worldwide Operations</span><span>42 countries served</span><span>Est. 2018</span></footer>
+</div>
+
+<!-- RESOURCES -->
+<div id="page-resources" class="page">
+  <div class="page-content">
+    <div class="page-title">Resources & Training</div>
+    <div class="page-subtitle">// GUIDES, PLAYBOOKS, TRAINING & ADVISORIES</div>
+    <div class="grid-2">
+      <div class="panel fade-in"><div class="panel-header">📚 INCIDENT PLAYBOOKS</div><div class="panel-body" style="padding:0"><div class="resource-item"><div class="resource-icon">📄</div><div><div class="resource-title">Ransomware Response Playbook v4.2</div><div class="resource-meta">Updated: Jan 2025 • PDF • 48 pages</div><div style="margin-top:6px"><span class="badge badge-red">ESSENTIAL</span></div></div></div><div class="resource-item"><div class="resource-icon">📄</div><div><div class="resource-title">Data Breach Response & Notification Guide</div><div class="resource-meta">Updated: Feb 2025 • PDF • 32 pages</div></div></div><div class="resource-item"><div class="resource-icon">📄</div><div><div class="resource-title">BEC / Phishing Investigation Framework</div><div class="resource-meta">Updated: Dec 2024 • PDF • 28 pages</div></div></div><div class="resource-item"><div class="resource-icon">📄</div><div><div class="resource-title">DDoS Mitigation & Recovery Procedures</div><div class="resource-meta">Updated: Nov 2024 • PDF • 22 pages</div></div></div></div></div>
+      <div class="panel fade-in"><div class="panel-header">🎓 TRAINING MODULES</div><div class="panel-body" style="padding:0"><div class="resource-item"><div class="resource-icon">🎓</div><div><div class="resource-title">Phishing Awareness Training — All Staff</div><div class="resource-meta">30 minutes • Interactive • Certificate</div><div style="margin-top:6px"><span class="badge badge-green">FREE</span></div></div></div><div class="resource-item"><div class="resource-icon">🎓</div><div><div class="resource-title">SOC Analyst Fundamentals — Tier 1</div><div class="resource-meta">8 hours • Video + Labs • Certificate</div></div></div><div class="resource-item"><div class="resource-icon">🎓</div><div><div class="resource-title">Digital Forensics & Incident Response</div><div class="resource-meta">40 hours • Hands-on Lab • GCIH Prep</div><div style="margin-top:6px"><span class="badge badge-blue">ADVANCED</span></div></div></div><div class="resource-item"><div class="resource-icon">🎓</div><div><div class="resource-title">Malware Analysis & Reverse Engineering</div><div class="resource-meta">60 hours • Expert Level • Lab Environment</div></div></div></div></div>
+      <div class="panel fade-in"><div class="panel-header">⚡ RECENT ADVISORIES</div><div class="panel-body" style="padding:0"><div class="resource-item"><div class="resource-icon">⚠️</div><div><div class="resource-title">CERSA-ADV-2025-047: FortiGate RCE</div><div class="resource-meta">Apr 8, 2025 • CVSS 9.8 Critical</div><div style="margin-top:6px"><span class="badge badge-red">CRITICAL</span></div></div></div><div class="resource-item"><div class="resource-icon">⚠️</div><div><div class="resource-title">CERSA-ADV-2025-041: Windows Print Spooler</div><div class="resource-meta">Mar 22, 2025 • CVSS 8.4 High</div></div></div><div class="resource-item"><div class="resource-icon">⚠️</div><div><div class="resource-title">CERSA-ADV-2025-038: Apache Struts RCE</div><div class="resource-meta">Mar 15, 2025 • CVSS 9.1 Critical</div></div></div></div></div>
+      <div class="panel fade-in"><div class="panel-header">🔗 EXTERNAL RESOURCES</div><div class="panel-body" style="padding:0"><div class="resource-item"><div class="resource-icon">🌐</div><div><div class="resource-title">CISA — Cybersecurity & Infrastructure Security Agency</div><div class="resource-meta">cisa.gov • Official Government Resource</div></div></div><div class="resource-item"><div class="resource-icon">🌐</div><div><div class="resource-title">NIST Cybersecurity Framework</div><div class="resource-meta">nist.gov • Industry Standard Framework</div></div></div><div class="resource-item"><div class="resource-icon">🌐</div><div><div class="resource-title">MITRE ATT&CK Framework</div><div class="resource-meta">attack.mitre.org • Adversary Tactics Database</div></div></div><div class="resource-item"><div class="resource-icon">🌐</div><div><div class="resource-title">VirusTotal — Multi-Engine Scanner</div><div class="resource-meta">virustotal.com • Free File & URL Analysis</div></div></div></div></div>
+    </div>
+  </div>
+  <footer><span>CERSA Knowledge Base — 2,400+ articles</span><span>Updated continuously</span><span>Access: RESTRICTED MEMBERS</span></footer>
+</div>
+
+<!-- CONTACT -->
+<div id="page-contact" class="page">
+  <div class="page-content">
+    <div class="page-title">Contact & Support</div>
+    <div class="page-subtitle">// REACH OUR EMERGENCY RESPONSE TEAM</div>
+    <div class="hotline-box fade-in"><div class="hotline-label">⚡ 24/7 EMERGENCY HOTLINE</div><div class="hotline-number">1-800-CERSA-01</div><div style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem">For active breaches and critical incidents only</div></div>
+    <div class="grid-2">
+      <div class="panel fade-in"><div class="panel-header">✉️ SEND SECURE MESSAGE</div><div class="panel-body"><div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" placeholder="Your name"></div><div class="form-group"><label class="form-label">Organization</label><input type="text" class="form-input" placeholder="Company / Agency"></div><div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-input" placeholder="secure@organization.com"></div><div class="form-group"><label class="form-label">Inquiry Type</label><select class="form-select"><option>Emergency Incident Response</option><option>Retainer Services</option><option>Training & Workshops</option><option>General Inquiry</option></select></div><div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" placeholder="Describe your inquiry or situation..."></textarea></div><div class="alert-box info" style="margin-bottom:1.2rem"><div class="alert-icon">🔒</div><div class="alert-text">All messages are end-to-end encrypted. PGP key available on request.</div></div><button class="btn-primary" onclick="submitContact()" style="width:100%">SEND ENCRYPTED MESSAGE</button></div></div>
+      <div style="display:flex;flex-direction:column;gap:1.5rem">
+        <div class="panel fade-in"><div class="panel-header">📞 CONTACT METHODS</div><div class="panel-body" style="padding:1rem 1.5rem"><div class="contact-method"><div class="contact-icon">📞</div><div><div class="contact-label">EMERGENCY HOTLINE</div><div class="contact-value">1-800-CERSA-01</div></div></div><div class="contact-method"><div class="contact-icon">📧</div><div><div class="contact-label">SECURE EMAIL</div><div class="contact-value">incident@cersa-response.org</div></div></div><div class="contact-method"><div class="contact-icon">💬</div><div><div class="contact-label">SECURE CHAT</div><div class="contact-value">Signal: @CERSA-Emergency</div></div></div><div class="contact-method"><div class="contact-icon">🔐</div><div><div class="contact-label">PGP FINGERPRINT</div><div class="contact-value" style="font-family:'Share Tech Mono',monospace;font-size:0.8rem">A3F2 9C1E 7B84 2D60 F1A9</div></div></div></div></div>
+        <div class="panel fade-in"><div class="panel-header">⏱️ RESPONSE SLA</div><div class="panel-body"><div class="progress-bar-wrap"><div class="progress-label"><span>P1 Critical</span><span>&lt; 15 minutes</span></div><div class="progress-track"><div class="progress-fill red" style="width:100%"></div></div></div><div class="progress-bar-wrap"><div class="progress-label"><span>P2 High</span><span>&lt; 1 hour</span></div><div class="progress-track"><div class="progress-fill" style="width:80%"></div></div></div><div class="progress-bar-wrap"><div class="progress-label"><span>P3 Medium</span><span>&lt; 4 hours</span></div><div class="progress-track"><div class="progress-fill" style="width:55%"></div></div></div><div class="progress-bar-wrap"><div class="progress-label"><span>P4 Low</span><span>&lt; 24 hours</span></div><div class="progress-track"><div class="progress-fill green" style="width:25%"></div></div></div></div></div>
+      </div>
+    </div>
+  </div>
+  <footer><span>CERSA — Protecting Critical Infrastructure Worldwide</span><span><span class="status-dot status-live"></span>ALL SYSTEMS OPERATIONAL</span><span>© 2025 CERSA. All rights reserved.</span></footer>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// PAGE NAVIGATION
+// ══════════════════════════════════════════════════════════
+const PAGE_LABELS = ['home','dashboard','threatmap','threats','response','tools','team','resources','contact'];
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+  const page = document.getElementById('page-' + pageId);
+  if (page) page.classList.add('active');
+  const idx = PAGE_LABELS.indexOf(pageId);
+  const btns = document.querySelectorAll('.nav-links button');
+  if (btns[idx]) btns[idx].classList.add('active');
+  window.scrollTo(0,0);
+  if (pageId === 'threatmap') initThreatMap();
+  if (pageId === 'dashboard') { initMiniMap(); initRadar(); }
+}
+
+function updateTime() {
+  const el = document.getElementById('dash-time');
+  if (el) el.textContent = new Date().toLocaleTimeString();
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+function submitIncident() { alert('✅ Incident report submitted!\n\nID: INC-' + (2510 + Math.floor(Math.random()*10)) + '\nExpected contact within 15 minutes.'); }
+function submitContact() { alert('🔒 Message encrypted and sent!\n\nA CERSA team member will respond within your selected SLA window.\nFor emergencies, call: 1-800-CERSA-01'); }
+function toggleCheck(el) { el.classList.toggle('done'); el.textContent = el.classList.contains('done') ? '✓' : ''; }
+
+// ══════════════════════════════════════════════════════════
+// ██████████████  UPGRADED NETWORK RADAR  ██████████████
+// ══════════════════════════════════════════════════════════
+
+let radarInitialized = false;
+let radarRAF = null;
+
+// Blip types with their colors and labels
+const BLIP_TYPES = [
+  { id: 'ransomware', color: '#ff3c3c', label: 'RANSOMWARE',  size: 4 },
+  { id: 'ddos',       color: '#ff8c00', label: 'DDOS',        size: 3.5 },
+  { id: 'phishing',   color: '#ffd600', label: 'PHISHING',    size: 3 },
+  { id: 'apt',        color: '#b070ff', label: 'APT',         size: 4.5 },
+  { id: 'malware',    color: '#00d4ff', label: 'MALWARE',     size: 3 },
+  { id: 'clean',      color: '#00ff88', label: 'CLEAN',       size: 2.5 },
+];
+
+// Radar zone names (inner → outer)
+const ZONES = ['CORE', 'DMZ', 'LAN', 'WAN', 'PERIMETER'];
+
+// Sector names (N, NE, E, SE, S, SW, W, NW)
+const SECTOR_LABELS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+
+// Blip pool
+let blips = [];
+let radarAngle = 0;            // current sweep angle in radians
+const RADAR_SPEED = 0.008;     // radians per frame (~0.25 Hz at 60fps)
+let radarDetected  = 0;
+let radarTracked   = 0;
+let radarNeutral   = 0;
+let radarHzDisplay = 0.25;
+
+// Trail: store recent sweep history for glow fade effect
+const TRAIL_LENGTH = 60; // frames
+let trailAngles = [];
+
+// Log messages
+const LOG_MSGS = [
+  ['SEC-01', 'Anomalous packet rate on port 443'],
+  ['SEC-02', 'Lateral movement attempt blocked'],
+  ['SEC-03', 'Brute-force SSH — 147 attempts/min'],
+  ['DMZ-01', 'Beacon interval detected — C2 suspected'],
+  ['LAN-07', 'ARP spoofing probe — contained'],
+  ['WAN-03', 'Geo-blocked IP range bypass attempt'],
+  ['CORE-1', 'Privilege escalation attempt — denied'],
+  ['SEC-04', 'DNS exfiltration pattern flagged'],
+  ['DMZ-02', 'TLS certificate anomaly — MitM check'],
+  ['LAN-12', 'Zero-day probe on CVE-2025-9912'],
+  ['WAN-08', 'DDoS SYN flood — 2.1 Gbps mitigated'],
+  ['CORE-2', 'Admin credential stuffing detected'],
+];
+
+function initRadar() {
+  if (radarInitialized) return;
+  radarInitialized = true;
+
+  const canvas  = document.getElementById('radarCanvas');
+  const wrap    = document.getElementById('radarWrap');
+  if (!canvas || !wrap) return;
+
+  function resize() {
+    const size = Math.min(wrap.clientWidth, wrap.clientHeight);
+    canvas.width  = size;
+    canvas.height = size;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Seed some initial blips
+  for (let i = 0; i < 6; i++) spawnBlip(true);
+
+  // Spawn blip timer
+  setInterval(() => {
+    if (Math.random() < 0.6) spawnBlip(false);
+  }, 1400);
+
+  // Log entry timer
+  setInterval(pushLogEntry, 2200);
+
+  // RAF loop
+  function loop() {
+    radarAngle = (radarAngle + RADAR_SPEED) % (Math.PI * 2);
+    trailAngles.push(radarAngle);
+    if (trailAngles.length > TRAIL_LENGTH) trailAngles.shift();
+    detectBlipsUnderSweep();
+    drawRadar(canvas);
+    radarRAF = requestAnimationFrame(loop);
+  }
+  loop();
+
+  // Initial log entries
+  setTimeout(() => { pushLogEntry(); pushLogEntry(); }, 400);
+}
+
+function spawnBlip(preExisting) {
+  // Random polar coords
+  const r    = 0.15 + Math.random() * 0.82; // normalized 0..1 (fraction of radar radius)
+  const ang  = Math.random() * Math.PI * 2;
+  const type = BLIP_TYPES[Math.floor(Math.random() * BLIP_TYPES.length)];
+  blips.push({
+    r, ang,
+    type,
+    opacity:     preExisting ? (0.3 + Math.random() * 0.5) : 0,
+    maxOpacity:  0.6 + Math.random() * 0.35,
+    detected:    preExisting,
+    fadeIn:      false,
+    age:         preExisting ? Math.floor(Math.random() * 200) : 0,
+    maxAge:      180 + Math.floor(Math.random() * 300),
+    pulsePhase:  Math.random() * Math.PI * 2,
+    trail:       [],  // trail of recent opacity snapshots for ripple
+  });
+}
+
+function detectBlipsUnderSweep() {
+  blips.forEach(b => {
+    b.age++;
+    // Check if sweep line just crossed this blip
+    const diff = (radarAngle - b.ang + Math.PI * 2) % (Math.PI * 2);
+    if (diff < RADAR_SPEED * 3 && !b.detected) {
+      b.detected = true;
+      b.opacity  = b.maxOpacity;
+      b.fadeIn   = true;
+      radarDetected++;
+      if (b.type.id === 'clean') radarNeutral++;
+      else radarTracked++;
+      updateRadarReadout();
+    }
+    // Fade in on sweep hit
+    if (b.fadeIn) {
+      b.opacity = Math.min(b.maxOpacity, b.opacity + 0.04);
+      if (b.opacity >= b.maxOpacity) b.fadeIn = false;
+    }
+    // Fade out over time
+    if (b.detected && b.age > b.maxAge) {
+      b.opacity -= 0.008;
+    }
+  });
+  // Remove dead blips
+  blips = blips.filter(b => b.opacity > 0);
+}
+
+function updateRadarReadout() {
+  const dEl = document.getElementById('rdr-detected');
+  const tEl = document.getElementById('rdr-tracked');
+  const nEl = document.getElementById('rdr-neutral');
+  if (dEl) dEl.textContent = radarDetected;
+  if (tEl) tEl.textContent = radarTracked;
+  if (nEl) nEl.textContent = radarNeutral;
+
+  const countEl = document.getElementById('radarThreatCount');
+  const live = blips.filter(b => b.detected && b.type.id !== 'clean').length;
+  if (countEl) countEl.textContent = live + ' THREAT' + (live === 1 ? '' : 'S');
+}
+
+function drawRadar(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const R = Math.min(W, H) * 0.46;   // radar disc radius
+
+  // ── Background ──────────────────────────────────────────
+  ctx.clearRect(0, 0, W, H);
+
+  // Outer square bg
+  ctx.fillStyle = '#020810';
+  ctx.fillRect(0, 0, W, H);
+
+  // Radar disc bg with radial gradient
+  const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+  bgGrad.addColorStop(0,   'rgba(0,40,60,0.9)');
+  bgGrad.addColorStop(0.6, 'rgba(0,20,35,0.9)');
+  bgGrad.addColorStop(1,   'rgba(0,5,15,0.95)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fillStyle = bgGrad;
+  ctx.fill();
+
+  // ── Sweep trail (fading green wedge) ────────────────────
+  if (trailAngles.length > 1) {
+    const trailStart = trailAngles[0];
+    const trailEnd   = trailAngles[trailAngles.length - 1];
+    // Draw as a filled arc wedge with gradient opacity
+    const steps = Math.min(trailAngles.length, 30);
+    for (let i = 0; i < steps; i++) {
+      const t   = i / steps;
+      const a1  = trailAngles[Math.floor(i / steps * (trailAngles.length - 1))];
+      const a2  = trailAngles[Math.floor((i + 1) / steps * (trailAngles.length - 1))] || radarAngle;
+      const alpha = (i / steps) * 0.18;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, R, a1 - Math.PI/2, a2 - Math.PI/2, false);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(0,255,136,${alpha})`;
+      ctx.fill();
+    }
+  }
+
+  // ── Concentric rings ────────────────────────────────────
+  const rings = 5;
+  for (let i = 1; i <= rings; i++) {
+    const rr = R * (i / rings);
+    ctx.beginPath();
+    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(0,212,255,${0.08 + (i === rings ? 0.1 : 0)})`;
+    ctx.lineWidth = i === rings ? 1.2 : 0.7;
+    ctx.stroke();
+
+    // Zone label at East position
+    if (i < rings) {
+      ctx.font = `${Math.round(W * 0.022)}px 'Share Tech Mono', monospace`;
+      ctx.fillStyle = 'rgba(0,212,255,0.28)';
+      ctx.textAlign = 'left';
+      ctx.fillText(ZONES[i - 1], cx + rr + 4, cy - 3);
+    }
+  }
+
+  // ── Crosshair lines ──────────────────────────────────────
+  ctx.strokeStyle = 'rgba(0,212,255,0.1)';
+  ctx.lineWidth = 0.7;
+  // Horizontal
+  ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
+  // Vertical
+  ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+  // Diagonal
+  ctx.strokeStyle = 'rgba(0,212,255,0.06)';
+  const d45 = R * Math.cos(Math.PI / 4);
+  ctx.beginPath(); ctx.moveTo(cx - d45, cy - d45); ctx.lineTo(cx + d45, cy + d45); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + d45, cy - d45); ctx.lineTo(cx - d45, cy + d45); ctx.stroke();
+
+  // ── Compass labels ───────────────────────────────────────
+  const compassR = R + W * 0.04;
+  ctx.font      = `bold ${Math.round(W * 0.028)}px 'Share Tech Mono', monospace`;
+  ctx.fillStyle = 'rgba(0,212,255,0.5)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const compassPositions = [
+    [0, -1], [0.707, -0.707], [1, 0], [0.707, 0.707],
+    [0, 1],  [-0.707, 0.707], [-1, 0], [-0.707, -0.707]
+  ];
+  compassPositions.forEach(([dx, dy], i) => {
+    ctx.fillText(SECTOR_LABELS[i], cx + dx * compassR, cy + dy * compassR);
+  });
+
+  // ── Blips ────────────────────────────────────────────────
+  blips.forEach(b => {
+    if (!b.detected || b.opacity <= 0) return;
+    const bx = cx + Math.cos(b.ang - Math.PI / 2) * b.r * R;
+    const by = cy + Math.sin(b.ang - Math.PI / 2) * b.r * R;
+    const col = b.type.color;
+    const sz  = b.type.size * (W / 280);
+
+    // Outer pulse ring (cos-based pulsing)
+    const pulse = 0.4 + 0.6 * Math.abs(Math.sin(Date.now() * 0.003 + b.pulsePhase));
+    const ringR = sz * 2.5 + pulse * sz * 2;
+    const rg = ctx.createRadialGradient(bx, by, sz * 0.5, bx, by, ringR);
+    rg.addColorStop(0, col + Math.round(b.opacity * 80).toString(16).padStart(2,'0'));
+    rg.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(bx, by, ringR, 0, Math.PI * 2);
+    ctx.fillStyle = rg;
+    ctx.fill();
+
+    // Blip core dot
+    ctx.beginPath();
+    ctx.arc(bx, by, sz, 0, Math.PI * 2);
+    ctx.fillStyle = col;
+    ctx.globalAlpha = b.opacity;
+    ctx.shadowColor  = col;
+    ctx.shadowBlur   = 10;
+    ctx.fill();
+    ctx.globalAlpha  = 1;
+    ctx.shadowBlur   = 0;
+
+    // Blip tag label (short)
+    if (b.opacity > 0.35 && b.type.id !== 'clean') {
+      const labelSize = Math.round(W * 0.022);
+      ctx.font = `${labelSize}px 'Share Tech Mono', monospace`;
+      ctx.fillStyle = col;
+      ctx.globalAlpha = b.opacity * 0.85;
+      ctx.textAlign = bx > cx ? 'left' : 'right';
+      ctx.textBaseline = 'middle';
+      const lx = bx > cx ? bx + sz + 3 : bx - sz - 3;
+      ctx.fillText(b.type.label.slice(0,4), lx, by);
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // ── Sweep arm (bright line) ──────────────────────────────
+  const sweepAngle = radarAngle - Math.PI / 2;
+  const sweepGrad = ctx.createLinearGradient(cx, cy,
+    cx + Math.cos(sweepAngle) * R,
+    cy + Math.sin(sweepAngle) * R);
+  sweepGrad.addColorStop(0,   'rgba(0,255,136,0.9)');
+  sweepGrad.addColorStop(0.7, 'rgba(0,255,136,0.4)');
+  sweepGrad.addColorStop(1,   'transparent');
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(sweepAngle) * R, cy + Math.sin(sweepAngle) * R);
+  ctx.strokeStyle = sweepGrad;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur  = 8;
+  ctx.stroke();
+  ctx.shadowBlur  = 0;
+
+  // Sweep head glow dot
+  ctx.beginPath();
+  ctx.arc(cx + Math.cos(sweepAngle) * R, cy + Math.sin(sweepAngle) * R, 3, 0, Math.PI*2);
+  ctx.fillStyle = '#00ff88';
+  ctx.shadowColor = '#00ff88';
+  ctx.shadowBlur  = 12;
+  ctx.fill();
+  ctx.shadowBlur  = 0;
+
+  // ── Center dot ───────────────────────────────────────────
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#00d4ff';
+  ctx.shadowColor = '#00d4ff';
+  ctx.shadowBlur  = 10;
+  ctx.fill();
+  ctx.shadowBlur  = 0;
+
+  // ── Outer disc border ────────────────────────────────────
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0,212,255,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Tick marks on outer ring
+  for (let t = 0; t < 360; t += 10) {
+    const ra = (t - 90) * Math.PI / 180;
+    const len = t % 90 === 0 ? 8 : (t % 45 === 0 ? 5 : 3);
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(ra) * (R - len), cy + Math.sin(ra) * (R - len));
+    ctx.lineTo(cx + Math.cos(ra) * R,         cy + Math.sin(ra) * R);
+    ctx.strokeStyle = t % 90 === 0 ? 'rgba(0,212,255,0.6)' : 'rgba(0,212,255,0.25)';
+    ctx.lineWidth = t % 90 === 0 ? 1.5 : 0.8;
+    ctx.stroke();
+  }
+
+  // ── HUD corners ──────────────────────────────────────────
+  const hCorner = W * 0.03;
+  const hOff    = W * 0.02;
+  const hLines  = [[hOff, hOff, hOff + hCorner, hOff, hOff, hOff + hCorner],
+                   [W-hOff-hCorner, hOff, W-hOff, hOff, W-hOff, hOff+hCorner],
+                   [hOff, H-hOff, hOff+hCorner, H-hOff, hOff, H-hOff-hCorner],
+                   [W-hOff-hCorner, H-hOff, W-hOff, H-hOff, W-hOff, H-hOff-hCorner]];
+  ctx.strokeStyle = 'rgba(0,212,255,0.5)';
+  ctx.lineWidth   = 1.5;
+  hLines.forEach(([x1,y1,x2,y2,x3,y3]) => {
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.moveTo(x1,y1); ctx.lineTo(x3,y3); ctx.stroke();
+  });
+
+  // ── Sweep angle readout ──────────────────────────────────
+  const deg = Math.round(((radarAngle * 180 / Math.PI) + 360) % 360);
+  ctx.font = `${Math.round(W * 0.028)}px 'Share Tech Mono', monospace`;
+  ctx.fillStyle = 'rgba(0,212,255,0.55)';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.fillText(String(deg).padStart(3,'0') + '°', W - hOff - 2, hOff + 2);
+
+  // Elapsed scan time
+  ctx.textAlign = 'left';
+  ctx.fillText('RNG:' + String(Math.floor(R)).padStart(3,'0'), hOff + 2, hOff + 2);
+}
+
+function pushLogEntry() {
+  const log = document.getElementById('radarLog');
+  if (!log) return;
+  const now  = new Date();
+  const ts   = now.getHours().toString().padStart(2,'0') + ':' +
+               now.getMinutes().toString().padStart(2,'0') + ':' +
+               now.getSeconds().toString().padStart(2,'0');
+  const msg  = LOG_MSGS[Math.floor(Math.random() * LOG_MSGS.length)];
+  const col  = msg[0].startsWith('CORE') ? '#ff3c3c'
+             : msg[0].startsWith('DMZ')  ? '#ff8c00'
+             : msg[0].startsWith('WAN')  ? '#b070ff'
+             : '#00d4ff';
+
+  const entry = document.createElement('div');
+  entry.className = 'rlog-entry';
+  entry.innerHTML =
+    `<span class="rlog-time">${ts}</span>` +
+    `<span class="rlog-sector" style="color:${col}">[${msg[0]}]</span>` +
+    `<span class="rlog-msg">${msg[1]}</span>`;
+  log.insertBefore(entry, log.firstChild);
+  while (log.children.length > 4) log.removeChild(log.lastChild);
+}
+
+// ══════════════════════════════════════════════════════════
+// WORLD MAP DATA
+// ══════════════════════════════════════════════════════════
+const CONTINENTS = [
+  [[71,-141],[65,-168],[58,-136],[49,-124],[32,-117],[22,-105],[15,-85],[8,-77],[10,-62],[25,-60],[47,-52],[55,-60],[62,-64],[72,-78],[71,-141]],
+  [[11,-73],[8,-77],[5,-60],[-5,-35],[-15,-38],[-23,-43],[-34,-54],[-55,-68],[-55,-65],[-40,-62],[-23,-43],[5,-52],[11,-73]],
+  [[71,-25],[71,32],[60,28],[55,38],[42,42],[38,27],[36,14],[45,14],[52,-5],[60,-7],[71,-25]],
+  [[58,-5],[52,-5],[50,2],[58,2],[58,-5]],
+  [[37,-5],[37,52],[12,44],[-11,40],[-35,18],[-35,26],[-25,33],[10,40],[37,37],[37,-5]],
+  [[72,28],[72,170],[55,145],[45,142],[35,140],[25,122],[10,108],[5,102],[10,80],[22,58],[35,50],[42,42],[55,38],[60,28],[72,28]],
+  [[22,68],[8,78],[8,80],[22,90],[28,88],[28,72],[22,68]],
+  [[43,141],[38,141],[33,130],[33,132],[36,136],[43,141]],
+  [[-8,105],[-5,110],[0,117],[0,127],[-5,132],[-8,140],[-8,130],[-8,118],[-8,105]],
+  [[-12,130],[-12,138],[-18,148],[-28,154],[-38,150],[-38,115],[-22,113],[-12,130]],
+  [[83,-45],[83,-15],[72,-22],[65,-37],[60,-45],[65,-52],[70,-44],[83,-45]],
+  [[71,28],[65,14],[58,5],[58,8],[65,18],[71,28]],
+];
+
+const CITIES = {
+  moscow:     { name:'Moscow',     lat:55.75, lon:37.62,   type:'attacker', flag:'🇷🇺', country:'Russia' },
+  beijing:    { name:'Beijing',    lat:39.90, lon:116.4,   type:'attacker', flag:'🇨🇳', country:'China' },
+  pyongyang:  { name:'Pyongyang', lat:39.03, lon:125.75,  type:'attacker', flag:'🇰🇵', country:'N.Korea' },
+  tehran:     { name:'Tehran',     lat:35.69, lon:51.39,   type:'attacker', flag:'🇮🇷', country:'Iran' },
+  saopaulo:   { name:'São Paulo',  lat:-23.5, lon:-46.6,   type:'attacker', flag:'🇧🇷', country:'Brazil' },
+  lagos:      { name:'Lagos',      lat:6.45,  lon:3.39,    type:'attacker', flag:'🇳🇬', country:'Nigeria' },
+  washington: { name:'Washington', lat:38.90, lon:-77.03,  type:'target', flag:'🇺🇸', country:'USA' },
+  london:     { name:'London',     lat:51.50, lon:-0.12,   type:'target', flag:'🇬🇧', country:'UK' },
+  berlin:     { name:'Berlin',     lat:52.52, lon:13.40,   type:'target', flag:'🇩🇪', country:'Germany' },
+  paris:      { name:'Paris',      lat:48.85, lon:2.35,    type:'target', flag:'🇫🇷', country:'France' },
+  tokyo:      { name:'Tokyo',      lat:35.69, lon:139.69,  type:'target', flag:'🇯🇵', country:'Japan' },
+  sydney:     { name:'Sydney',     lat:-33.86,lon:151.21,  type:'target', flag:'🇦🇺', country:'Australia' },
+  newdelhi:   { name:'New Delhi',  lat:28.61, lon:77.21,   type:'target', flag:'🇮🇳', country:'India' },
+  kyiv:       { name:'Kyiv',       lat:50.45, lon:30.52,   type:'target', flag:'🇺🇦', country:'Ukraine' },
+  toronto:    { name:'Toronto',    lat:43.65, lon:-79.38,  type:'target', flag:'🇨🇦', country:'Canada' },
+  singapore:  { name:'Singapore',  lat:1.35,  lon:103.82,  type:'target', flag:'🇸🇬', country:'Singapore' },
+};
+
+const ATTACK_TYPES = ['ransomware','ddos','phishing','apt','malware'];
+const ATTACK_PAIRS = [
+  ['moscow','washington'],['moscow','london'],['moscow','kyiv'],['moscow','berlin'],
+  ['beijing','tokyo'],['beijing','washington'],['beijing','singapore'],['beijing','sydney'],
+  ['pyongyang','tokyo'],['pyongyang','washington'],['pyongyang','singapore'],
+  ['tehran','london'],['tehran','berlin'],['tehran','newdelhi'],
+  ['saopaulo','washington'],['saopaulo','toronto'],
+  ['lagos','london'],['lagos','paris'],
+];
+
+// ══════════════════════════════════════════════════════════
+// MAP ENGINE
+// ══════════════════════════════════════════════════════════
+let mapInitialized = false;
+let miniMapInitialized = false;
+let attackInterval, statsInterval;
+let activeFilter = 'all';
+let totalToday = 41293;
+let counters = { ru:342, cn:218, kp:187, ir:94, br:62 };
+
+function project(lat, lon, W, H) {
+  return { x: (lon + 180) * (W / 360), y: (90 - lat) * (H / 180) };
+}
+
+function drawWorldMap(canvas, ctx) {
+  const W = canvas.width, H = canvas.height;
+  ctx.fillStyle = '#020c1a';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(0,212,255,0.06)';
+  ctx.lineWidth = 0.8;
+  for (let lon = -180; lon <= 180; lon += 30) {
+    const { x } = project(0, lon, W, H);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let lat = -90; lat <= 90; lat += 30) {
+    const { y } = project(lat, 0, W, H);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,212,255,0.12)';
+  ctx.lineWidth = 1;
+  const eq = project(0, 0, W, H);
+  ctx.beginPath(); ctx.moveTo(0, eq.y); ctx.lineTo(W, eq.y); ctx.stroke();
+  CONTINENTS.forEach(pts => {
+    ctx.beginPath();
+    pts.forEach(([lat, lon], i) => {
+      const { x, y } = project(lat, lon, W, H);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = '#0d2238';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,212,255,0.25)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  });
+  ctx.fillStyle = 'rgba(0,212,255,0.04)';
+  for (let lat = -80; lat < 80; lat += 4) {
+    for (let lon = -180; lon < 180; lon += 4) {
+      if (isLand(lat, lon)) {
+        const { x, y } = project(lat, lon, W, H);
+        ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI*2); ctx.fill();
+      }
+    }
+  }
+}
+
+function isLand(lat, lon) {
+  if (lon > -140 && lon < -52 && lat > 15 && lat < 72) return true;
+  if (lon > -80 && lon < -35 && lat > -55 && lat < 12) return true;
+  if (lon > -10 && lon < 42 && lat > 36 && lat < 71) return true;
+  if (lon > -18 && lon < 52 && lat > -35 && lat < 37) return true;
+  if (lon > 28 && lon < 145 && lat > 5 && lat < 72) return true;
+  if (lon > 113 && lon < 155 && lat > -38 && lat < -12) return true;
+  return false;
+}
+
+function drawCities(canvas, ctx, cities) {
+  const W = canvas.width, H = canvas.height;
+  Object.values(cities).forEach(city => {
+    const { x, y } = project(city.lat, city.lon, W, H);
+    const isAtk = city.type === 'attacker';
+    const col = isAtk ? '#ff3c3c' : '#00d4ff';
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, 10);
+    grad.addColorStop(0, isAtk ? 'rgba(255,60,60,0.4)' : 'rgba(0,212,255,0.3)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+}
+
+function drawArc(svgEl, from, to, color, W, H, duration=2000) {
+  const p1 = project(from.lat, from.lon, W, H);
+  const p2 = project(to.lat, to.lon, W, H);
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const cx2 = (p1.x + p2.x) / 2 - dy * 0.2;
+  const cy2 = (p1.y + p2.y) / 2 - Math.min(dist * 0.35, H * 0.3);
+  const d = `M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} Q ${cx2.toFixed(1)} ${cy2.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  const ns = 'http://www.w3.org/2000/svg';
+  const glow = document.createElementNS(ns, 'path');
+  glow.setAttribute('d', d); glow.setAttribute('fill', 'none');
+  glow.setAttribute('stroke', color); glow.setAttribute('stroke-width', '3'); glow.setAttribute('opacity', '0.15');
+  svgEl.appendChild(glow);
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', d); path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', color); path.setAttribute('stroke-width', '1.2');
+  path.setAttribute('opacity', '0.8'); path.setAttribute('stroke-linecap', 'round');
+  const len = 600;
+  path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+  path.style.transition = `stroke-dashoffset ${duration}ms cubic-bezier(0.4,0,0.2,1)`;
+  svgEl.appendChild(path);
+  const dot = document.createElementNS(ns, 'circle');
+  dot.setAttribute('r', '3'); dot.setAttribute('fill', color);
+  dot.setAttribute('filter', `drop-shadow(0 0 4px ${color})`);
+  const anim = document.createElementNS(ns, 'animateMotion');
+  anim.setAttribute('dur', `${duration}ms`); anim.setAttribute('begin', '0s');
+  anim.setAttribute('fill', 'freeze'); anim.setAttribute('calcMode', 'spline');
+  anim.setAttribute('keySplines', '0.4 0 0.2 1');
+  const mpath = document.createElementNS(ns, 'mpath');
+  const pathId = 'arc-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  path.setAttribute('id', pathId);
+  mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + pathId);
+  anim.appendChild(mpath); dot.appendChild(anim); svgEl.appendChild(dot);
+  requestAnimationFrame(() => { path.style.strokeDashoffset = '0'; });
+  setTimeout(() => {
+    const flash = document.createElementNS(ns, 'circle');
+    flash.setAttribute('cx', p2.x.toFixed(1)); flash.setAttribute('cy', p2.y.toFixed(1));
+    flash.setAttribute('r', '4'); flash.setAttribute('fill', 'none');
+    flash.setAttribute('stroke', color); flash.setAttribute('stroke-width', '2');
+    flash.style.animation = 'pulse-out 1s ease-out forwards';
+    svgEl.appendChild(flash);
+    setTimeout(() => flash.remove(), 1000);
+  }, duration);
+  setTimeout(() => {
+    path.style.transition = 'opacity 0.5s'; path.style.opacity = '0';
+    glow.style.transition = 'opacity 0.5s'; glow.style.opacity = '0';
+    setTimeout(() => { path.remove(); glow.remove(); dot.remove(); }, 600);
+  }, duration + 2000);
+}
+
+function initThreatMap() {
+  if (mapInitialized) return;
+  mapInitialized = true;
+  const canvas = document.getElementById('worldCanvas');
+  const area = document.getElementById('mapArea');
+  const svgEl = document.getElementById('arcSvg');
+  function resize() {
+    canvas.width = area.clientWidth; canvas.height = area.clientHeight;
+    const ctx = canvas.getContext('2d');
+    drawWorldMap(canvas, ctx); drawCities(canvas, ctx, CITIES);
+    svgEl.setAttribute('viewBox', `0 0 ${canvas.width} ${canvas.height}`);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  canvas.addEventListener('mousemove', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const W = canvas.width, H = canvas.height;
+    const tip = document.getElementById('cityTooltip');
+    let found = false;
+    Object.values(CITIES).forEach(city => {
+      const { x, y } = project(city.lat, city.lon, W, H);
+      const sx = x * (rect.width / W), sy = y * (rect.height / H);
+      if (Math.abs(mx - sx) < 14 && Math.abs(my - sy) < 14) {
+        tip.style.display = 'block'; tip.style.left = (mx + 14) + 'px'; tip.style.top = (my - 10) + 'px';
+        const col = city.type === 'attacker' ? '#ff3c3c' : '#00d4ff';
+        tip.style.borderColor = col; tip.style.color = col;
+        tip.innerHTML = `${city.flag} <strong>${city.name}</strong> (${city.country})<br><span style="color:var(--text-dim);font-size:0.62rem">${city.type.toUpperCase()} NODE</span>`;
+        found = true;
+      }
+    });
+    if (!found) tip.style.display = 'none';
+  });
+  canvas.addEventListener('mouseleave', () => { document.getElementById('cityTooltip').style.display = 'none'; });
+  function spawnAttack() {
+    const pair = ATTACK_PAIRS[Math.floor(Math.random() * ATTACK_PAIRS.length)];
+    const from = CITIES[pair[0]], to = CITIES[pair[1]];
+    const type = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
+    if (activeFilter !== 'all' && activeFilter !== type) return;
+    const blocked = Math.random() < 0.7;
+    const color = blocked ? '#00ff88' : '#ff3c3c';
+    const W = canvas.width, H = canvas.height;
+    drawArc(svgEl, from, to, color, W, H, 1800 + Math.random() * 1200);
+    addFeedItem(from, to, type, blocked);
+    updateStats(from.country);
+  }
+  attackInterval = setInterval(spawnAttack, 900 + Math.random() * 600);
+  let atkPerMinBucket = 0;
+  statsInterval = setInterval(() => {
+    totalToday += Math.floor(Math.random() * 8) + 2;
+    document.getElementById('totalToday').textContent = totalToday.toLocaleString();
+    atkPerMinBucket++;
+    document.getElementById('atkPerMin').textContent = atkPerMinBucket;
+    if (atkPerMinBucket > 20) atkPerMinBucket = Math.floor(Math.random() * 15) + 8;
+    const keys = ['ru','cn','kp','ir','br'];
+    const inc = Math.floor(Math.random() * 4);
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    counters[key] += inc;
+    document.getElementById('cnt-' + key).textContent = counters[key];
+    const blockedEl = document.getElementById('blocked');
+    if (blockedEl) { let b = parseInt(blockedEl.textContent.replace(/,/g,'')) + Math.floor(Math.random()*5)+1; blockedEl.textContent = b.toLocaleString(); }
+  }, 3000);
+  setTimeout(spawnAttack, 200); setTimeout(spawnAttack, 700); setTimeout(spawnAttack, 1200);
+}
+
+function updateStats(country) {
+  const map = { 'Russia':'ru','China':'cn','N.Korea':'kp','Iran':'ir','Brazil':'br' };
+  const key = map[country];
+  if (key) {
+    counters[key]++;
+    const el = document.getElementById('cnt-' + key);
+    if (el) el.textContent = counters[key];
+    const maxVal = counters['ru'];
+    ['ru','cn','kp','ir','br'].forEach(k => {
+      const bar = document.getElementById('bar-' + k);
+      if (bar) bar.style.width = Math.max(8, Math.round((counters[k] / maxVal) * 100)) + '%';
+    });
+  }
+}
+
+const TYPE_LABELS = { ransomware:'RANSOMWARE', ddos:'DDOS', phishing:'PHISHING', apt:'APT', malware:'MALWARE' };
+const TYPE_CLASSES = { ransomware:'tag-ransomware', ddos:'tag-ddos', phishing:'tag-phishing', apt:'tag-apt', malware:'tag-malware' };
+
+function addFeedItem(from, to, type, blocked) {
+  const feed = document.getElementById('attackFeed');
+  if (!feed) return;
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.innerHTML = `<div class="feed-item-header"><div style="display:flex;align-items:center;gap:4px"><span class="feed-attacker">${from.flag} ${from.name}</span><span class="feed-arrow">→</span><span class="feed-target">${to.flag} ${to.name}</span></div><span class="feed-time">${timeStr}</span></div><div class="feed-detail"><span class="feed-type-tag ${TYPE_CLASSES[type]}">${TYPE_LABELS[type]}</span><span style="color:${blocked ? '#00ff88' : '#ff3c3c'};font-family:'Share Tech Mono',monospace;font-size:0.65rem">${blocked ? '✓ BLOCKED' : '⚠ ACTIVE'}</span></div>`;
+  feed.insertBefore(item, feed.firstChild);
+  while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+}
+
+function initMiniMap() {
+  if (miniMapInitialized) return;
+  miniMapInitialized = true;
+  const canvas = document.getElementById('miniMapCanvas');
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  canvas.width = parent.clientWidth; canvas.height = 240;
+  const ctx = canvas.getContext('2d');
+  drawWorldMap(canvas, ctx);
+  const miniCities = { moscow:CITIES.moscow, beijing:CITIES.beijing, washington:CITIES.washington, london:CITIES.london };
+  drawCities(canvas, ctx, miniCities);
+  const svgEl = document.getElementById('miniArcSvg');
+  svgEl.setAttribute('viewBox', `0 0 ${canvas.width} ${canvas.height}`);
+  function miniAttack() {
+    const pair = ATTACK_PAIRS[Math.floor(Math.random() * 4)];
+    const from = CITIES[pair[0]], to = CITIES[pair[1]];
+    const blocked = Math.random() < 0.6;
+    drawArc(svgEl, from, to, blocked ? '#00ff88' : '#ff3c3c', canvas.width, canvas.height, 2000);
+  }
+  miniAttack();
+  setInterval(miniAttack, 2500);
+}
+
+function setFilter(type, btn) {
+  activeFilter = type;
+  document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
